@@ -39,5 +39,4 @@ class Bitrix24SaleOrder extends Bitrix24Entity
             ]]);
         return $result['result'];
     }
-
 }

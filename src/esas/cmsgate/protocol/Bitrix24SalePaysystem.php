@@ -57,7 +57,7 @@ class Bitrix24SalePaysystem extends Bitrix24Entity
      * @throws CmsgateException
      * @return array
      */
-    public function list($select, $filter)
+    public function list($select, $filter = null)
     {
         $result = $this->restClient->call('sale.paysystem.list', [
             'select' => $select,

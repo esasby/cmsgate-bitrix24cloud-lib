@@ -1,7 +1,7 @@
 <?php
 
 
-namespace esas\cmsgate\bitrix24cloud;
+namespace esas\cmsgate\protocol;
 
 
 use esas\cmsgate\bitrix24cloud\entity\Bitrix24SaleBasketItem;

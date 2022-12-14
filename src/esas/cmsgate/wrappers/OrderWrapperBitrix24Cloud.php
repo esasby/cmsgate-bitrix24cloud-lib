@@ -5,7 +5,7 @@ namespace esas\cmsgate\wrappers;
 use esas\cmsgate\bitrix24cloud\entity\Bitrix24SaleOrder;
 use esas\cmsgate\bitrix24cloud\entity\Bitrix24SaleShipment;
 use esas\cmsgate\bitrix24cloud\entity\Bitrix24User;
-use esas\cmsgate\cache\OrderCache;
+use esas\cmsgate\bridge\OrderCache;
 use esas\cmsgate\CmsConnectorBitrix24Cloud;
 use esas\cmsgate\OrderStatus;
 
@@ -26,22 +26,20 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
     /**
      * @param OrderCache $orderCache
      */
-    public function __construct($orderCache)
-    {
+    public function __construct($orderCache) {
         parent::__construct($orderCache);
         $orderId = $orderCache->getOrderData()[Bitrix24SaleOrder::ORDER_ID];
-        $this->restOrderData = CmsConnectorBitrix24Cloud::getInstance()->getBitrix24Api()->saleOrder()->get($orderId);
+        $this->restOrderData = CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api()->saleOrder()->get($orderId);
         $this->restShippingData = $this->restOrderData[Bitrix24SaleOrder::SHIPMENTS][0]; // todo check if only 1 item
         $userId = $this->restOrderData[Bitrix24SaleOrder::USER_ID];
-        $this->restUserData = CmsConnectorBitrix24Cloud::getInstance()->getBitrix24Api()->user()->get($userId);
+        $this->restUserData = CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api()->user()->get($userId);
     }
 
     /**
      * Уникальный идентификатор заказ в рамках CMS.
      * @return string
      */
-    public function getOrderIdUnsafe()
-    {
+    public function getOrderIdUnsafe() {
         return $this->restOrderData[Bitrix24SaleOrder::ORDER_ID];
     }
 
@@ -49,8 +47,7 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * Полное имя покупателя
      * @return string
      */
-    public function getFullNameUnsafe()
-    {
+    public function getFullNameUnsafe() {
         return trim($this->restUserData[Bitrix24User::FIRST_NAME] . ' ' . $this->restUserData[Bitrix24User::LAST_NAME]);
     }
 
@@ -59,8 +56,7 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * (если включено администратором)
      * @return string
      */
-    public function getMobilePhoneUnsafe()
-    {
+    public function getMobilePhoneUnsafe() {
         return $this->restUserData[Bitrix24User::PHONE];
     }
 
@@ -69,8 +65,7 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * (если включено администратором)
      * @return string
      */
-    public function getEmailUnsafe()
-    {
+    public function getEmailUnsafe() {
         return $this->restUserData[Bitrix24User::EMAIL];
     }
 
@@ -78,8 +73,7 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * Физический адрес покупателя
      * @return string
      */
-    public function getAddressUnsafe()
-    {
+    public function getAddressUnsafe() {
         return $this->restUserData[Bitrix24User::PERSONAL_COUNTRY] . ' ' . $this->restUserData[Bitrix24User::PERSONAL_CITY]; //todo может стоит брать из shipping?
 
     }
@@ -88,14 +82,12 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * Общая сумма товаров в заказе
      * @return string
      */
-    public function getAmountUnsafe()
-    {
+    public function getAmountUnsafe() {
         return $this->restOrderData[Bitrix24SaleOrder::PRICE];
     }
 
 
-    public function getShippingAmountUnsafe()
-    {
+    public function getShippingAmountUnsafe() {
         if ($this->restShippingData != null && $this->restShippingData[Bitrix24SaleShipment::PRICE_DELIVERY] > 0)
             return $this->restShippingData[Bitrix24SaleShipment::PRICE_DELIVERY];
         return 0;
@@ -105,8 +97,7 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * Валюта заказа (буквенный код)
      * @return string
      */
-    public function getCurrencyUnsafe()
-    {
+    public function getCurrencyUnsafe() {
 //        return 974; //todo
         return $this->restOrderData[Bitrix24SaleOrder::CURRENCY];
     }
@@ -115,8 +106,7 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * Массив товаров в заказе
      * @return \esas\cmsgate\wrappers\OrderProductWrapperBitrix24Cloud[]
      */
-    public function getProductsUnsafe()
-    {
+    public function getProductsUnsafe() {
         if ($this->products != null)
             return $this->products;
         $items = $this->restOrderData[Bitrix24SaleOrder::BASKET_ITEMS];
@@ -129,16 +119,14 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * Текущий статус заказа в CMS
      * @return mixed
      */
-    public function getStatusUnsafe()
-    {
+    public function getStatusUnsafe() {
         return new OrderStatus(
             $this->restOrderData[Bitrix24SaleOrder::STATUS_ID],
             $this->restOrderData[Bitrix24SaleOrder::STATUS_ID] //todo fix
         );
     }
 
-    public function updateStatus($newOrderStatus)
-    {
+    public function updateStatus($newOrderStatus) {
         parent::updateStatus($newOrderStatus);
     }
 
@@ -147,8 +135,7 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * Идентификатор клиента
      * @return string
      */
-    public function getClientIdUnsafe()
-    {
+    public function getClientIdUnsafe() {
         return $this->restOrderData[Bitrix24SaleOrder::USER_ID];
     }
 

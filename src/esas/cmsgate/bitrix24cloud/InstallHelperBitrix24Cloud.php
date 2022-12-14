@@ -8,14 +8,46 @@ use esas\cmsgate\bitrix\CmsgatePaysystem;
 use esas\cmsgate\CmsConnectorBitrix;
 use esas\cmsgate\CmsConnectorBitrix24Cloud;
 use esas\cmsgate\ConfigFields;
+use esas\cmsgate\bridge\ShopConfigBitrix24;
+use esas\cmsgate\BridgeConnectorBitrix24;
+use esas\cmsgate\protocol\RequestParamsBitrix24Cloud;
 use esas\cmsgate\Registry;
-use esas\cmsgate\view\admin\ConfigFormBitrix;
+use esas\cmsgate\utils\CMSGateException;
+use esas\cmsgate\view\admin\ConfigFormBitrix24Cloud;
 
 class InstallHelperBitrix24Cloud
 {
+    /**
+     * @throws CMSGateException
+     */
+    public function install() {
+        $this->checkAuth();
+        $this->saveAuth();
+        $this->addHandler();
+        // $this->addPaysystem();
+    }
+
+    public function checkAuth() {
+        $result = CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api(false)->salePaysystem()->list('id');
+        if ($result['error'] = 0) {
+            throw new CMSGateException("Auth data not correct");
+        }
+    }
+
+    public function saveAuth() {
+        $authData = new ShopConfigBitrix24();
+        $authData
+            ->setMemberId($_REQUEST[RequestParamsBitrix24Cloud::MEMBER_ID])
+            ->setDomain($_REQUEST[RequestParamsBitrix24Cloud::DOMAIN])
+            ->setAccessToken($_REQUEST[RequestParamsBitrix24Cloud::AUTH_ID])
+            ->setExpireAt($_REQUEST[RequestParamsBitrix24Cloud::AUTH_EXPIRES])
+            ->setRefreshToken($_REQUEST[RequestParamsBitrix24Cloud::REFRESH_ID]);
+        BridgeConnectorBitrix24::fromRegistry()->getShopConfigRepository()->save($authData);
+    }
+
     public function addHandler()
     {
-        /** @var ConfigFormBitrix $configFormBitrix */
+        /** @var ConfigFormBitrix24Cloud $configFormBitrix */
         $configFormBitrix = Registry::getRegistry()->getConfigForm();
 
         $fields = [
@@ -24,14 +56,14 @@ class InstallHelperBitrix24Cloud
             'SORT' => '100',
             'SETTINGS' => [
                 'FORM_DATA' => [
-                    'ACTION_URI' => '', //todo
+                    'ACTION_URI' => BridgeConnectorBitrix24::fromRegistry()->getHandlerActionUrl(),
                     'METHOD' => 'POST',
                     'FIELDS' => [
-                        'paymentId' => [
+                        RequestParamsBitrix24Cloud::PAYMENT_ID => [
                             'CODE' => 'PAYMENT_ID', //используем payment_id, а не order_id, т.к. проще определить платежную систему
                             'VISIBLE' => 'N'
                         ],
-                        'orderId' => [
+                        RequestParamsBitrix24Cloud::ORDER_ID => [
                             'CODE' => 'ORDER_ID',
                             'VISIBLE' => 'N'
                         ]
@@ -54,7 +86,7 @@ class InstallHelperBitrix24Cloud
                             'PROVIDER_KEY' => 'ORDER',
                             'PROVIDER_VALUE' => 'ID']],])
             ]];
-        return CmsConnectorBitrix24Cloud::getInstance()->getBitrix24Api()->salePaysystem()->handlerAdd($fields); //todo check if already present
+        return CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api()->salePaysystem()->handlerAdd($fields); //todo check if already present
     }
 
     /**
@@ -80,15 +112,15 @@ class InstallHelperBitrix24Cloud
             $paySystemSettings['LOGOTYPE'] = base64_decode($content);
         }
 
-        $previousVersionPSIds = CmsConnectorBitrix24Cloud::getInstance()->getBitrix24Api()->salePaysystem()->list(
+        $previousVersionPSIds = CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api()->salePaysystem()->list(
             ['ID'],
             ['ACTION_FILE' => $paySystem->getActionFile(),
                 'ENTITY_REGISTRY_TYPE' => 'DELETED']); //hope only one
 
         if (!empty($previousVersionPSIds) && sizeof($previousVersionPSIds) > 0 && $previousVersionPSIds[0]["ID"] > 0)
-            $result = CmsConnectorBitrix24Cloud::getInstance()->getBitrix24Api()->salePaysystem()->update($previousVersionPSIds[0]["ID"], $paySystemSettings);
+            $result = CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api()->salePaysystem()->update($previousVersionPSIds[0]["ID"], $paySystemSettings);
         else
-            $result = CmsConnectorBitrix24Cloud::getInstance()->getBitrix24Api()->salePaysystem()->add($paySystemSettings);
+            $result = CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api()->salePaysystem()->add($paySystemSettings);
 
         if ($result) {
             $paySystem->setId($result->getId()); //todo fix

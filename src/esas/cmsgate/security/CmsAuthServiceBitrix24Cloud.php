@@ -4,12 +4,12 @@
 namespace esas\cmsgate\security;
 
 
-use esas\cmsgate\bitrix24cloud\RequestParamsBitrix24Cloud;
-use esas\cmsgate\CloudRegistry;
+use esas\cmsgate\protocol\RequestParamsBitrix24Cloud;
 use esas\cmsgate\CmsConnectorBitrix24Cloud;
+use esas\cmsgate\BridgeConnectorBitrix24;
 use esas\cmsgate\utils\CMSGateException;
 
-class ApiAuthServiceBitrix24Cloud extends ApiAuthService
+class CmsAuthServiceBitrix24Cloud extends CmsAuthService
 {
     public function checkAuth(&$request)
     {
@@ -18,11 +18,10 @@ class ApiAuthServiceBitrix24Cloud extends ApiAuthService
          * Если ок, то получаем из локальной БД config данные (админские, сохраненные на этапе install)
          * и уже их используем для авторизоваться на bitrix24 при работе с REST и запрошиваем настройки
          **/
-        $order = CmsConnectorBitrix24Cloud::getInstance()->getBitrix24Api(false)->salePayment()->get(RequestParamsBitrix24Cloud::ORDER_ID);
+        $order = CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api(false)->salePayment()->get(RequestParamsBitrix24Cloud::PAYMENT_ID);
         if ($order == null) {
             throw new CMSGateException('Auth is incorrect');
         }
-        $configCache = CloudRegistry::getRegistry()->getConfigCacheRepository()->getByLogin(RequestParamsBitrix24Cloud::MEMBER_ID);
-        return $configCache;
+        return BridgeConnectorBitrix24::fromRegistry()->getShopConfigRepository()->findByMemberId(RequestParamsBitrix24Cloud::MEMBER_ID);
     }
 }

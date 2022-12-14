@@ -4,7 +4,8 @@
 namespace esas\cmsgate\bitrix24cloud\entity;
 
 
-use esas\cmsgate\bitrix24cloud\Bitrix24RestClient;
+
+use esas\cmsgate\protocol\Bitrix24RestClient;
 
 abstract class Bitrix24Entity
 {

@@ -27,23 +27,15 @@ class ControllerBitrix24CloudNotify extends ControllerBitrix24Cloud
 
             $loggerMainString = "Order[" . $orderWrapper->getOrderNumberOrId() . "]: ";
             $this->logger->info($loggerMainString . "Controller started");
-            CmsConnectorBitrix24Cloud::getInstance()->getBitrix24Api(true)->saleOrder()->updateStatus(
+            CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api(true)->saleOrder()->updateStatus(
                 $orderWrapper->getOrderId(),
                 Registry::getRegistry()->getConfigWrapper()->getOrderStatusPayed());
-
-            $notifyTildaRq = new TildaNotifyRq();
-            $notifyTildaRq->setOrderId($orderWrapper->getOrderId());
-            $notifyTildaRq->setAmount($orderWrapper->getAmount());
-            $notifyTildaRq->setCurrency($orderWrapper->getCurrency());
-            $protocol = new ProtocolTilda(Registry::getRegistry()->getCmsConnector()->getNotificationURL());
-            $resp = $protocol->notifyOnOrderPayed($notifyTildaRq);
-            if ($resp->hasError()) {
-                $this->logger->error($loggerMainString . "Can not notify Tilda CMS...");
-                throw new Exception($resp->getResponseMessage(), $resp->getResponseCode());
-            } else {
-                $this->logger->info($loggerMainString . "Tilda CMS was successfully notified...");
-            }
-            return $resp;
+            CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api(true)->salePayment()->update(
+                $orderWrapper->getOrderId(),
+                Registry::getRegistry()->getConfigWrapper()->getOrderStatusPayed(),
+                $orderWrapper->getExtId()
+            );
+            $this->logger->info($loggerMainString . "Bitrix24Cloud was successfully notified...");
         } catch (Throwable $e) {
             $this->logger->error($loggerMainString . "Controller exception! ", $e);
             throw $e;
