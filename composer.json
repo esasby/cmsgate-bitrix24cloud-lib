@@ -20,6 +20,7 @@
     "php": ">= 5.6.0",
     "ext-curl": "*",
     "esas/cmsgate-core": "~v1.17.11",
+    "esas/cmsgate-bitrix-lib": "~v1.18.2",
     "esas/cmsgate-bridge-lib": "~v1.18.1"
   },
   "autoload": {
