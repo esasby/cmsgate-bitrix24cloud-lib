@@ -55,7 +55,7 @@ class CmsConnectorBitrix24Cloud extends CmsConnectorBridge
         return new CmsConnectorDescriptor(
             "cmsgate-bitrix24cloud-lib",
             new VersionDescriptor(
-                "v1.17.1",
+                "v1.18.1",
                 "2023-01-09"
             ),
             "Cmsgate Bitrix24 cloud connector",
