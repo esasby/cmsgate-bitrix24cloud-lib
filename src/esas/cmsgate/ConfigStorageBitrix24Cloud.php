@@ -8,6 +8,7 @@
 
 namespace esas\cmsgate;
 
+use esas\cmsgate\bitrix\BitrixRequest;
 use esas\cmsgate\protocol\RequestParamsBitrix24Cloud;
 
 /**
@@ -19,35 +20,27 @@ class ConfigStorageBitrix24Cloud extends ConfigStorageCmsArray
 {
     public function __construct() {
         //получаем настройки
-        $orderData = BridgeConnector::fromRegistry()->getOrderCacheService()->getSessionOrderCacheSafe()->getOrderData();
-        $paymentId = $orderData[RequestParamsBitrix24Cloud::PAYMENT_ID];
-        $psId = $orderData[RequestParamsBitrix24Cloud::PAYMENT_SYSTEM_ID];
-        $restPaysystemConfig = CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api(true)->salePaysystem()->getSettingsForPayment($paymentId, $psId);
-        parent::__construct($restPaysystemConfig);
-    }
-
-    public function getConstantConfigValue($key) {
-        switch ($key) {
-            case ConfigFields::orderStatusPending():
-            case ConfigFields::orderPaymentStatusPending():
-                return "cmsgate_pending";
-            case ConfigFields::orderStatusPayed():
-            case ConfigFields::orderPaymentStatusPayed():
-                return "cmsgate_payed";
-            case ConfigFields::orderStatusFailed():
-            case ConfigFields::orderPaymentStatusFailed():
-                return "cmsgate_failed";
-            case ConfigFields::orderStatusCanceled():
-            case ConfigFields::orderPaymentStatusCanceled():
-                return "cmsgate_canceled";
-            case ConfigFields::useOrderNumber():
-                return true;
-            default:
-                return null;
+        $orderCache = BridgeConnector::fromRegistry()->getOrderCacheService()->getSessionOrderCache();
+        if ($orderCache != null) {
+            $orderData = BridgeConnector::fromRegistry()->getOrderCacheService()->getSessionOrderCache()->getOrderData();
+            $paymentId = $orderData[RequestParamsBitrix24Cloud::PAYMENT_ID];
+            $psId = $orderData[RequestParamsBitrix24Cloud::PAYMENT_SYSTEM_ID];
+            $restPaysystemConfig = CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api(true)->salePaysystem()->getSettingsForPayment($paymentId, $psId);
+        } else if (RequestParamsBitrix24Cloud::getPaymentId() != null) {
+            $paymentId = RequestParamsBitrix24Cloud::getPaymentId();
+            $payment = CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api(true)->salePayment()->get($paymentId);
+            $psId = $payment->getPaysystemId();
+            $restPaysystemConfig = CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api(true)->salePaysystem()->getSettingsForPayment($paymentId, $psId);
         }
+        parent::__construct($restPaysystemConfig);
     }
 
     public function createCmsRelatedKey($key) {
         return 'ps_' . $key;
+    }
+
+    public function convertToBoolean($cmsConfigValue)
+    {
+        return $cmsConfigValue == 'Y' || $cmsConfigValue == '1' || $cmsConfigValue == "true";
     }
 }

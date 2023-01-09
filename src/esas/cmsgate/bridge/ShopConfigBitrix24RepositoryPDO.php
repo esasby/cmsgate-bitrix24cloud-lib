@@ -31,7 +31,6 @@ class ShopConfigBitrix24RepositoryPDO extends ShopConfigBitrix24Repository
 
     public function __construct($pdo, $tableName = null)
     {
-        parent::__construct();
         $this->logger = Logger::getLogger(get_class($this));
         $this->pdo = $pdo;
         if ($tableName != null)
@@ -52,7 +51,7 @@ class ShopConfigBitrix24RepositoryPDO extends ShopConfigBitrix24Repository
         return $shopConfigBitrix24;
     }
 
-    public function save($shopConfigBitrix24)
+    public function saveOrUpdate($shopConfigBitrix24)
     {
         $sql = "select * from $this->tableName where member_id = :memberId";
         $stmt = $this->pdo->prepare($sql);
@@ -100,5 +99,18 @@ class ShopConfigBitrix24RepositoryPDO extends ShopConfigBitrix24Repository
             $shopConfig =  $this->createShopConfigObject($row);
         }
         return $shopConfig;
+    }
+
+    public function getByUUID($cacheConfigUUID) {
+        $sql = "select * from $this->tableName where id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'id' => $cacheConfigUUID,
+        ]);
+        $configCache = null;
+        while ($row = $stmt->fetch(PDO::FETCH_LAZY)) {
+            $configCache =  $this->createShopConfigObject($row);
+        }
+        return $configCache;
     }
 }

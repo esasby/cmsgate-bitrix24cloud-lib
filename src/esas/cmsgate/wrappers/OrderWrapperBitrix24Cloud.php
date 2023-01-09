@@ -2,12 +2,10 @@
 
 namespace esas\cmsgate\wrappers;
 
-use esas\cmsgate\bitrix24cloud\entity\Bitrix24SaleOrder;
-use esas\cmsgate\bitrix24cloud\entity\Bitrix24SaleShipment;
-use esas\cmsgate\bitrix24cloud\entity\Bitrix24User;
 use esas\cmsgate\bridge\OrderCache;
 use esas\cmsgate\CmsConnectorBitrix24Cloud;
 use esas\cmsgate\OrderStatus;
+use esas\cmsgate\protocol\RequestParamsBitrix24Cloud;
 
 /**
  * Не может в чистом виде наследоваться от OrderWrapperCached и работать только с сохраненным в БД шлюза
@@ -20,7 +18,7 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
     protected $products;
 
     protected $restOrderData;
-    protected $restShippingData;
+    protected $paymentId;
     protected $restUserData;
 
     /**
@@ -28,11 +26,10 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      */
     public function __construct($orderCache) {
         parent::__construct($orderCache);
-        $orderId = $orderCache->getOrderData()[Bitrix24SaleOrder::ORDER_ID];
+        $orderId = $orderCache->getOrderData()[RequestParamsBitrix24Cloud::ORDER_ID];
+        $this->paymentId = $orderCache->getOrderData()[RequestParamsBitrix24Cloud::PAYMENT_ID];
         $this->restOrderData = CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api()->saleOrder()->get($orderId);
-        $this->restShippingData = $this->restOrderData[Bitrix24SaleOrder::SHIPMENTS][0]; // todo check if only 1 item
-        $userId = $this->restOrderData[Bitrix24SaleOrder::USER_ID];
-        $this->restUserData = CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api()->user()->get($userId);
+        $this->restUserData = CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api()->crmContact()->get($this->restOrderData->getCrmContactId());
     }
 
     /**
@@ -40,7 +37,11 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * @return string
      */
     public function getOrderIdUnsafe() {
-        return $this->restOrderData[Bitrix24SaleOrder::ORDER_ID];
+        return $this->restOrderData->getId();
+    }
+
+    public function getPaymentIdUnsafe() {
+        return $this->paymentId;
     }
 
     /**
@@ -48,7 +49,7 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * @return string
      */
     public function getFullNameUnsafe() {
-        return trim($this->restUserData[Bitrix24User::FIRST_NAME] . ' ' . $this->restUserData[Bitrix24User::LAST_NAME]);
+        return trim($this->restUserData->getName() . ' ' . $this->restUserData->getLastName());
     }
 
     /**
@@ -57,7 +58,7 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * @return string
      */
     public function getMobilePhoneUnsafe() {
-        return $this->restUserData[Bitrix24User::PHONE];
+        return $this->restUserData->getPhone();
     }
 
     /**
@@ -66,7 +67,7 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * @return string
      */
     public function getEmailUnsafe() {
-        return $this->restUserData[Bitrix24User::EMAIL];
+        return $this->restUserData->getEmail();
     }
 
     /**
@@ -74,7 +75,11 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * @return string
      */
     public function getAddressUnsafe() {
-        return $this->restUserData[Bitrix24User::PERSONAL_COUNTRY] . ' ' . $this->restUserData[Bitrix24User::PERSONAL_CITY]; //todo может стоит брать из shipping?
+//        if (is_array($this->restOrderData->getShipments())) {
+//            $shipment = $this->restOrderData->getShipments()[0];
+//            return $shipment->get
+//        }
+        return $this->restUserData->getAddressCountry() . ' ' . $this->restUserData->getAddressCity() . ' ' . $this->restUserData->getAddress();
 
     }
 
@@ -83,13 +88,13 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * @return string
      */
     public function getAmountUnsafe() {
-        return $this->restOrderData[Bitrix24SaleOrder::PRICE];
+        return $this->restOrderData->getPrice();
     }
 
 
     public function getShippingAmountUnsafe() {
-        if ($this->restShippingData != null && $this->restShippingData[Bitrix24SaleShipment::PRICE_DELIVERY] > 0)
-            return $this->restShippingData[Bitrix24SaleShipment::PRICE_DELIVERY];
+        if (is_array($this->restOrderData->getShipments()) && $this->restOrderData->getShipments()[0]->getPrice() > 0)
+            return $this->restOrderData->getShipments()[0]->getPrice();
         return 0;
     }
 
@@ -98,8 +103,7 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * @return string
      */
     public function getCurrencyUnsafe() {
-//        return 974; //todo
-        return $this->restOrderData[Bitrix24SaleOrder::CURRENCY];
+        return $this->restOrderData->getCurrency();
     }
 
     /**
@@ -109,7 +113,7 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
     public function getProductsUnsafe() {
         if ($this->products != null)
             return $this->products;
-        $items = $this->restOrderData[Bitrix24SaleOrder::BASKET_ITEMS];
+        $items = $this->restOrderData->getItems();
         foreach ($items as $basketItem)
             $this->products[] = new OrderProductWrapperBitrix24Cloud($basketItem);
         return $this->products;
@@ -121,8 +125,8 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      */
     public function getStatusUnsafe() {
         return new OrderStatus(
-            $this->restOrderData[Bitrix24SaleOrder::STATUS_ID],
-            $this->restOrderData[Bitrix24SaleOrder::STATUS_ID] //todo fix
+            $this->restOrderData->getStatusId(),
+            $this->restOrderData->getStatusId() //todo fix
         );
     }
 
@@ -136,7 +140,7 @@ class OrderWrapperBitrix24Cloud extends OrderWrapperCached
      * @return string
      */
     public function getClientIdUnsafe() {
-        return $this->restOrderData[Bitrix24SaleOrder::USER_ID];
+        return $this->restOrderData->getUserId();
     }
 
 }

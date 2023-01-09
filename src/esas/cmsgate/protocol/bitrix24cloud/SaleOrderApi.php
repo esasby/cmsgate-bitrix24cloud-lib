@@ -1,20 +1,17 @@
 <?php
 
 
-namespace esas\cmsgate\bitrix24cloud\entity;
+namespace esas\cmsgate\protocol\bitrix24cloud;
 
 
-use esas\cmsgate\CmsConnectorBitrix;
-use esas\cmsgate\ConfigFields;
-use esas\cmsgate\Registry;
-use esas\cmsgate\utils\CMSGateException;
+use esas\cmsgate\bitrix\dto\sale\OrderConverter;
 
 /**
- * Class Bitrix24SaleOrder
+ * Class SaleOrderApi
  * Список полей https://dev.1c-bitrix.ru/rest_help/sale/order/resource.php
- * @package esas\cmsgate\bitrix24cloud\entity
+ * @package esas\cmsgate\protocol
  */
-class Bitrix24SaleOrder extends Bitrix24Entity
+class SaleOrderApi extends Bitrix24Api
 {
     const ORDER_ID = 'id';
     const USER_ID = 'userId'; //todo проверить, что есть в ресурсе заказа, т.к. его нет в документации
@@ -23,20 +20,22 @@ class Bitrix24SaleOrder extends Bitrix24Entity
     const STATUS_ID = 'statusId';
     const BASKET_ITEMS = 'basketItems';
     const SHIPMENTS = 'shipments';
+    const PAYED = 'payed';
 
     public function get($id)
     {
-        $result = $this->restClient->call('sale.order.get', $id);
-        return $result['result'];
+        $result = $this->restClient->call('sale.order.get', ['id' => $id]);
+        return OrderConverter::fromArray($result['result']['order']);
     }
 
-    public function updateStatus($id, $newStatus)
+    public function updateStatus($id, $newStatus, $setPaid = false)
     {
+        $fields[self::STATUS_ID] = $newStatus;
+        if ($setPaid)
+            $fields[self::PAYED] = 'Y';
         $result = $this->restClient->call('sale.order.update', [
             'id' => $id,
-            'fields' => [
-                self::STATUS_ID => $newStatus
-            ]]);
+            'fields' => $fields]);
         return $result['result'];
     }
 }

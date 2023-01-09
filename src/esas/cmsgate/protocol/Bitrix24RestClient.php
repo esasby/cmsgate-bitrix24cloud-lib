@@ -3,7 +3,6 @@
 
 namespace esas\cmsgate\protocol;
 
-
 use esas\cmsgate\utils\CMSGateException;
 use esas\cmsgate\utils\Logger;;
 
@@ -404,7 +403,7 @@ class Bitrix24RestClient
             CURLOPT_VERBOSE => true,
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_TIMEOUT => 5,
-            CURLOPT_USERAGENT => strtolower(__CLASS__ . '-PHP-SDK/v' . self::VERSION),
+//            CURLOPT_USERAGENT => strtolower(__CLASS__ . '-PHP-SDK/v' . self::VERSION),
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => http_build_query($additionalParameters),
             CURLOPT_URL => $url
@@ -421,7 +420,7 @@ class Bitrix24RestClient
         $curlErrorNumber = curl_errno($curl);
 
         if (DEBUG) {
-            \CB24Log\CB24Log::Add('REQUEST url: ' . $url . "\n\n"
+            $this->logger->info('REQUEST url: ' . $url . "\n\n"
                 . 'REQUEST params: ' . print_r($additionalParameters, true) . "\n\n"
                 . 'REQUEST curl raw result: ' . print_r($curlResult, true) . "\n\n"
                 . 'REQUEST curl info: ' . print_r($this->requestInfo, true));
@@ -431,7 +430,7 @@ class Bitrix24RestClient
         if ($curlErrorNumber > 0) {
             $errorMsg = curl_error($curl) . PHP_EOL . 'cURL error code: ' . $curlErrorNumber . PHP_EOL;
             if (DEBUG)
-                \CB24Log\CB24Log::Add('REQUEST curl error: ' . '[' . $curlErrorNumber . '] ' . $errorMsg);
+                $this->logger->info('REQUEST curl error: ' . '[' . $curlErrorNumber . '] ' . $errorMsg);
 
 
             curl_close($curl);
@@ -448,7 +447,7 @@ class Bitrix24RestClient
         if (!is_null($jsonResult) && (JSON_ERROR_NONE == $jsonErrorCode)) unset($curlResult);
 
         if (DEBUG)
-            \CB24Log\CB24Log::Add('REQUEST curl decoded JSON result: ' . print_r($jsonResult, true));
+            $this->logger->info('REQUEST curl decoded JSON result: ' . print_r($jsonResult, true));
 
         if (is_null($jsonResult) && (JSON_ERROR_NONE != $jsonErrorCode)) {
             /**
@@ -515,13 +514,10 @@ class Bitrix24RestClient
 
         // handling bitrix24 api-level errors
         if (array_key_exists('error', $requestResult)) {
-            $errName = '';
+            $errName = $requestResult['error'];
             $errDescription = '';
             if (isset($requestResult['error_description'])) {
-                $errDescription = $requestResult['error_description'] . PHP_EOL;
-            }
-            if (!strlen($errDescription)) {
-                $errName = $requestResult['error'] . PHP_EOL;
+                $errDescription = $requestResult['error_description'];
             }
             $errorMsg = $errName . $errDescription . 'in call: [ ' . $methodName . ' ]';
             throw new CmsgateException($errorMsg);
@@ -596,8 +592,6 @@ class Bitrix24RestClient
         $applicationId = $this->getApplicationId();
         $applicationSecret = $this->getApplicationSecret();
         $refreshToken = $this->getRefreshToken();
-        $applicationScope = $this->getApplicationScope();
-        $redirectUri = $this->getRedirectUri();
 
         if (is_null($domain)) {
             throw new CmsgateException('domain not found, you must call setDomain method before');
@@ -607,19 +601,12 @@ class Bitrix24RestClient
             throw new CmsgateException('application id not found, you must call setApplicationSecret method before');
         } elseif (is_null($refreshToken)) {
             throw new CmsgateException('application id not found, you must call setRefreshToken method before');
-        } elseif (is_null($applicationScope)) {
-            throw new CmsgateException('application scope not found, you must call setApplicationScope method before');
-        } elseif (is_null($redirectUri)) {
-            throw new CmsgateException('application redirect URI not found, you must call setRedirectUri method before');
         }
-
         $url = 'https://' . $domain . "/oauth/token/" .
             "?client_id=" . urlencode($applicationId) .
             "&grant_type=refresh_token" .
             "&client_secret=" . $applicationSecret .
-            "&refresh_token=" . $refreshToken .
-            '&scope=' . implode(',', array_map('urlencode', array_unique($applicationScope))) .
-            '&redirect_uri=' . urlencode($redirectUri);
+            "&refresh_token=" . $refreshToken;
         $requestResult = $this->executeRequest($url);
         if (isset($requestResult['error'])) return false;
         else return $requestResult;

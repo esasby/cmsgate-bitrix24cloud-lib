@@ -1,15 +1,16 @@
 <?php
 namespace esas\cmsgate\wrappers;
 
-use esas\cmsgate\bitrix24cloud\entity\Bitrix24SaleBasketItem;
+use esas\cmsgate\protocol\Bitrix24SaleBasketItem;
+use esas\cmsgate\bitrix\dto\sale\OrderItem;
 use Throwable;
 
 class OrderProductWrapperBitrix24Cloud extends OrderProductSafeWrapper
 {
     /**
-     * @var string[]
+     * @var OrderItem
      */
-    private $basketItem;
+    private $orderItem;
 
     /**
      * OrderProductWrapperTilda constructor.
@@ -18,7 +19,7 @@ class OrderProductWrapperBitrix24Cloud extends OrderProductSafeWrapper
     public function __construct($orderItem)
     {
         parent::__construct();
-        $this->basketItem = $orderItem;
+        $this->orderItem = $orderItem;
     }
 
     /**
@@ -28,7 +29,7 @@ class OrderProductWrapperBitrix24Cloud extends OrderProductSafeWrapper
      */
     public function getInvIdUnsafe()
     {
-        return $this->basketItem[Bitrix24SaleBasketItem::PRODUCT_ID];
+        return $this->orderItem->getProductId();
     }
 
     /**
@@ -38,7 +39,7 @@ class OrderProductWrapperBitrix24Cloud extends OrderProductSafeWrapper
      */
     public function getNameUnsafe()
     {
-        return $this->basketItem[Bitrix24SaleBasketItem::NAME];
+        return $this->orderItem->getName();
     }
 
     /**
@@ -48,7 +49,7 @@ class OrderProductWrapperBitrix24Cloud extends OrderProductSafeWrapper
      */
     public function getCountUnsafe()
     {
-        return $this->basketItem[Bitrix24SaleBasketItem::QUANTITY];
+        return intval($this->orderItem->getQuantity());
     }
 
     /**
@@ -58,6 +59,6 @@ class OrderProductWrapperBitrix24Cloud extends OrderProductSafeWrapper
      */
     public function getUnitPriceUnsafe()
     {
-        return $this->basketItem[Bitrix24SaleBasketItem::PRICE];
+        return $this->orderItem->getUnitPrice();
     }
 }

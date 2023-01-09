@@ -8,7 +8,7 @@
 
 namespace esas\cmsgate;
 
-use esas\cmsgate\protocol\RequestParamsBitrix24Cloud;
+use esas\cmsgate\bitrix\BitrixRequest;
 use esas\cmsgate\bridge\ShopConfigBitrix24;
 use esas\cmsgate\descriptors\CmsConnectorDescriptor;
 use esas\cmsgate\descriptors\VendorDescriptor;
@@ -16,10 +16,19 @@ use esas\cmsgate\descriptors\VersionDescriptor;
 use esas\cmsgate\lang\LocaleLoaderBitrix24Cloud;
 use esas\cmsgate\protocol\Bitrix24CloudProtocol;
 use esas\cmsgate\protocol\Bitrix24RestClient;
+use esas\cmsgate\protocol\RequestParamsBitrix24Cloud;
+use esas\cmsgate\utils\CMSGateException;
 use esas\cmsgate\wrappers\OrderWrapperBitrix24Cloud;
 
 class CmsConnectorBitrix24Cloud extends CmsConnectorBridge
 {
+    private $config;
+
+    public function __construct($config)
+    {
+        parent::__construct();
+        $this->config = $config;
+    }
     /**
      * @var Bitrix24CloudProtocol
      */
@@ -46,8 +55,8 @@ class CmsConnectorBitrix24Cloud extends CmsConnectorBridge
         return new CmsConnectorDescriptor(
             "cmsgate-bitrix24cloud-lib",
             new VersionDescriptor(
-                "v1.17.0",
-                "2022-08-25"
+                "v1.17.1",
+                "2023-01-09"
             ),
             "Cmsgate Bitrix24 cloud connector",
             "https://bitbucket.esas.by/projects/CG/repos/cmsgate-bitrix24cloud-lib/browse",
@@ -65,11 +74,12 @@ class CmsConnectorBitrix24Cloud extends CmsConnectorBridge
     }
 
     public function getReturnToShopSuccessURL() {
-        return Registry::getRegistry()->getConfigWrapper()->getConfig(ConfigFieldsBitrix24Cloud::returnUrlSuccess());
+        $orderCache = BridgeConnectorBitrix24::fromRegistry()->getOrderCacheService()->getSessionOrderCacheSafe();
+        return $orderCache->getOrderData()[RequestParamsBitrix24Cloud::RETURN_TO_SHOP_URL];
     }
 
     public function getReturnToShopFailedURL() {
-        return Registry::getRegistry()->getConfigWrapper()->getConfig(ConfigFieldsBitrix24Cloud::returnUrlFailed());
+        return $this->getReturnToShopSuccessURL();
     }
 
     public function getBitrix24Api($adminAccess = true) {
@@ -85,22 +95,60 @@ class CmsConnectorBitrix24Cloud extends CmsConnectorBridge
     }
 
     protected function createBitrix24Api($adminAccess) {
-        $client = new Bitrix24RestClient();
         if ($adminAccess) {
             /** @var ShopConfigBitrix24 $shopConfig */
             $shopConfig = BridgeConnector::fromRegistry()->getShopConfigService()->getSessionShopConfigSafe();
-            $client->setDomain($shopConfig->getDomain());
-            $client->setMemberId($shopConfig->getMemberId());
-            $client->setAccessToken($shopConfig->getAccessToken());
-            $client->setRefreshToken($shopConfig->getRefreshToken());
+            return $this->createBitrix24CloudProtocol($shopConfig);
         } else {
-            $client->setDomain($_REQUEST[RequestParamsBitrix24Cloud::DOMAIN]);
-            $client->setMemberId($_REQUEST[RequestParamsBitrix24Cloud::MEMBER_ID]);
-            $client->setAccessToken($_REQUEST[RequestParamsBitrix24Cloud::AUTH_ID]);
-            $client->setRefreshToken($_REQUEST[RequestParamsBitrix24Cloud::REFRESH_ID]);
+            $client = new Bitrix24RestClient();
+            $client->setDomain(RequestParamsBitrix24Cloud::getDomain());
+            $client->setMemberId(RequestParamsBitrix24Cloud::getMemberId());
+            $client->setAccessToken(RequestParamsBitrix24Cloud::getAccessToken());
+            $client->setRefreshToken(RequestParamsBitrix24Cloud::getRefreshToken());
+            $client->setApplicationId($this->config[CONFIG_APP_ID]);
+            $client->setApplicationSecret($this->config[CONFIG_APP_SECRET]);
+            return new Bitrix24CloudProtocol($client);
         }
-        $client->setApplicationId('ID from MP');
-        $client->setApplicationCode('Code from MP');
+    }
+
+    public function createBitrix24CloudProtocol(ShopConfigBitrix24 $shopConfig) {
+        $client = new Bitrix24RestClient();
+        $client->setDomain($shopConfig->getDomain());
+        $client->setMemberId($shopConfig->getMemberId());
+        $client->setAccessToken($shopConfig->getAccessToken());
+        $client->setRefreshToken($shopConfig->getRefreshToken());
+        $client->setApplicationId($this->config[CONFIG_APP_ID]);
+        $client->setApplicationSecret($this->config[CONFIG_APP_SECRET]);
+        $this->refreshTokens($client, $shopConfig);
         return new Bitrix24CloudProtocol($client);
+    }
+
+    /**
+     * @param $client Bitrix24RestClient
+     * @param $shopConfig ShopConfigBitrix24
+     * @throws CMSGateException
+     */
+    private function refreshTokens(&$client,&$shopConfig ) {
+        $resExpire = $client->isAccessTokenExpire();
+        if ($resExpire) {
+            $this->logger->info('Access token is expired for domain[' . $client->getDomain() . "]");
+            $result = $client->getNewAccessToken();
+            if ($result === false) {
+                throw new CMSGateException('Access token refresh error for domain[' . $client->getDomain() . "]");
+            } elseif (is_array($result) && array_key_exists('access_token', $result) && !empty($result['access_token'])) {
+                $shopConfig->setRefreshToken($result['refresh_token']);
+                $shopConfig->setAccessToken($result['access_token']);
+                BridgeConnectorBitrix24::fromRegistry()->getShopConfigService()->saveConfig($shopConfig);
+                $client->setAccessToken($shopConfig->getAccessToken());
+                $client->setRefreshToken($shopConfig->getRefreshToken());
+            } else {
+                throw new CMSGateException('Access token refresh error for domain[' . $client->getDomain() . "]");
+            }
+        }
+    }
+
+    public function getModuleActionName()
+    {
+        return str_replace('.', '_', Registry::getRegistry()->getModuleDescriptor()->getModuleMachineName());
     }
 }

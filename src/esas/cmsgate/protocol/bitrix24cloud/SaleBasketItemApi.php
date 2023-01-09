@@ -1,11 +1,9 @@
 <?php
 
 
-namespace esas\cmsgate\bitrix24cloud\entity;
+namespace esas\cmsgate\protocol\bitrix24cloud;
 
-
-
-class Bitrix24SaleBasketItem extends Bitrix24Entity
+class SaleBasketItemApi extends Bitrix24Api
 {
     const QUANTITY = 'quantity';
     const PRICE = 'price';

@@ -1,13 +1,11 @@
 <?php
 
 
-namespace esas\cmsgate\bitrix24cloud\entity;
-
-
+namespace esas\cmsgate\protocol\bitrix24cloud;
 
 use esas\cmsgate\protocol\Bitrix24RestClient;
 
-abstract class Bitrix24Entity
+abstract class Bitrix24Api
 {
     const ITEMS_PER_PAGE_LIMIT = 50;
 

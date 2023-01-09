@@ -4,6 +4,7 @@
 namespace esas\cmsgate;
 
 
+use esas\cmsgate\bitrix\BitrixRequest;
 use esas\cmsgate\bridge\OrderCacheRepository;
 use esas\cmsgate\bridge\OrderCacheRepositoryPDO;
 use esas\cmsgate\bridge\ShopConfigBitrix24Repository;
@@ -61,21 +62,21 @@ abstract class BridgeConnectorBitrix24 extends BridgeConnectorPDO
      * В Bitrix для хранения реальных и тестовых заказаов используются различные таблицы
      * @var OrderCacheRepository
      */
-    protected $orderCacheRepositoryForSandbox;
+//    protected $orderCacheRepositoryForSandbox;
 
-    /**
-     * @return OrderCacheRepository
-     */
-    public function getOrderCacheRepository() {
-        if (!Registry::getRegistry()->getConfigWrapper()->isSandbox()) {
-            return parent::getOrderCacheRepository();
-        } else {
-            if ($this->orderCacheRepositoryForSandbox == null) {
-                $tableName = Registry::getRegistry()->getModuleDescriptor()->getCmsAndPaysystemName()
-                    . '_order_cache_sandbox';
-                $this->orderCacheRepositoryForSandbox = new OrderCacheRepositoryPDO($this->getPDO(), $tableName);
-            }
-            return $this->orderCacheRepositoryForSandbox;
-        }
-    }
+//    /**
+//     * @return OrderCacheRepository
+//     */
+//    public function getOrderCacheRepository() {
+//        if (!RequestParamsBitrix24Cloud::isSandbox()) {
+//            return parent::getOrderCacheRepository();
+//        } else {
+//            if ($this->orderCacheRepositoryForSandbox == null) {
+//                $tableName = Registry::getRegistry()->getModuleDescriptor()->getCmsAndPaysystemName()
+//                    . '_order_cache_sandbox';
+//                $this->orderCacheRepositoryForSandbox = new OrderCacheRepositoryPDO($this->getPDO(), $tableName);
+//            }
+//            return $this->orderCacheRepositoryForSandbox;
+//        }
+//    }
 }
