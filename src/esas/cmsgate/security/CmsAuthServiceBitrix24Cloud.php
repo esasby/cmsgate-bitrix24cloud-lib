@@ -4,9 +4,9 @@
 namespace esas\cmsgate\security;
 
 
-use esas\cmsgate\bitrix\BitrixRequest;
 use esas\cmsgate\CmsConnectorBitrix24Cloud;
 use esas\cmsgate\BridgeConnectorBitrix24;
+use esas\cmsgate\protocol\RequestParamsBitrix24Cloud;
 use esas\cmsgate\utils\CMSGateException;
 
 class CmsAuthServiceBitrix24Cloud extends CmsAuthService
