@@ -22,6 +22,9 @@ use esas\cmsgate\wrappers\OrderWrapperBitrix24Cloud;
 
 class CmsConnectorBitrix24Cloud extends CmsConnectorBridge
 {
+    /**
+     * @var BridgeConfigBitrix24Cloud
+     */
     private $config;
 
     public function __construct($config)
@@ -55,7 +58,7 @@ class CmsConnectorBitrix24Cloud extends CmsConnectorBridge
         return new CmsConnectorDescriptor(
             "cmsgate-bitrix24cloud-lib",
             new VersionDescriptor(
-                "v1.18.3",
+                "v1.18.4",
                 "2023-01-18"
             ),
             "Cmsgate Bitrix24 cloud connector",
@@ -105,9 +108,9 @@ class CmsConnectorBitrix24Cloud extends CmsConnectorBridge
             $client->setMemberId(RequestParamsBitrix24Cloud::getMemberId());
             $client->setAccessToken(RequestParamsBitrix24Cloud::getAccessToken());
             $client->setRefreshToken(RequestParamsBitrix24Cloud::getRefreshToken());
-            $client->setApplicationId($this->config[CONFIG_APP_ID]);
-            $client->setApplicationSecret($this->config[CONFIG_APP_SECRET]);
-            $client->setDebugMode($this->config[CONFIG_DEBUG_MODE]);
+            $client->setApplicationId($this->config->getAppId());
+            $client->setApplicationSecret($this->config->getAppSecret());
+            $client->setDebugMode($this->config->isDebugMode());
             return new Bitrix24CloudProtocol($client);
         }
     }
@@ -118,9 +121,9 @@ class CmsConnectorBitrix24Cloud extends CmsConnectorBridge
         $client->setMemberId($shopConfig->getMemberId());
         $client->setAccessToken($shopConfig->getAccessToken());
         $client->setRefreshToken($shopConfig->getRefreshToken());
-        $client->setApplicationId($this->config[CONFIG_APP_ID]);
-        $client->setApplicationSecret($this->config[CONFIG_APP_SECRET]);
-        $client->setDebugMode($this->config[CONFIG_DEBUG_MODE]);
+        $client->setApplicationId($this->config->getAppId());
+        $client->setApplicationSecret($this->config->getAppSecret());
+        $client->setDebugMode($this->config->isDebugMode());
         $this->refreshTokens($client, $shopConfig);
         return new Bitrix24CloudProtocol($client);
     }

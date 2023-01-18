@@ -21,7 +21,7 @@
     "ext-curl": "*",
     "esas/cmsgate-core": "~v1.17.13",
     "esas/cmsgate-bitrix-lib": "~v1.18.3",
-    "esas/cmsgate-bridge-lib": "~v1.18.2"
+    "esas/cmsgate-bridge-lib": "~v1.18.3"
   },
   "autoload": {
     "psr-4": {
