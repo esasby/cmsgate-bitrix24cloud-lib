@@ -21,6 +21,7 @@ class SalePaysystemApi extends Bitrix24Api
         $fields = $this->toInstallArray($paysystem);
         $result = $this->restClient->call('sale.paysystem.add', $fields);
         $paysystem->setId($result['result']);
+        $this->logger->info("Paysystem[" . $paysystem->getActionFile() . '] was added with id ' . $paysystem->getId());
         return $result['result'];
     }
 
@@ -60,6 +61,7 @@ class SalePaysystemApi extends Bitrix24Api
         $result = $this->restClient->call('sale.paysystem.update', [
             'id' => $id,
             'fields' => $this->toInstallArray($paysystem)]);
+        $this->logger->info("Paysystem[" . $id . '] was updated');
         return $result['result'];
     }
 
@@ -95,6 +97,8 @@ class SalePaysystemApi extends Bitrix24Api
      */
     public function handlerAdd($newHandler) {
         $result = $this->restClient->call('sale.paysystem.handler.add', PaysystemHandlerConverter::toArray($newHandler));
+        $newHandler->setId($result['result']);
+        $this->logger->info("Handler[" . $newHandler->getCode() . '] was added with id ' . $newHandler->getId());
         return $result['result'];
     }
 
@@ -121,6 +125,7 @@ class SalePaysystemApi extends Bitrix24Api
             "id" => $handlerId,
             "fields" => PaysystemHandlerConverter::toArray($handler)
         ));
+        $this->logger->info("Handler[" . $handlerId . '] was updated');
         return $result['result'];
     }
 

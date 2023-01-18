@@ -13,13 +13,7 @@ use esas\cmsgate\bitrix\dto\sale\OrderConverter;
  */
 class SaleOrderApi extends Bitrix24Api
 {
-    const ORDER_ID = 'id';
-    const USER_ID = 'userId'; //todo проверить, что есть в ресурсе заказа, т.к. его нет в документации
-    const PRICE = 'price';
-    const CURRENCY = 'currency'; //todo проверить, что есть в ресурсе заказа, т.к. его нет в документации
     const STATUS_ID = 'statusId';
-    const BASKET_ITEMS = 'basketItems';
-    const SHIPMENTS = 'shipments';
     const PAYED = 'payed';
 
     public function get($id)
@@ -36,6 +30,7 @@ class SaleOrderApi extends Bitrix24Api
         $result = $this->restClient->call('sale.order.update', [
             'id' => $id,
             'fields' => $fields]);
+        $this->logger->info("Order[" . $id . '] status was updated to[' . $newStatus . ']');
         return $result['result'];
     }
 }

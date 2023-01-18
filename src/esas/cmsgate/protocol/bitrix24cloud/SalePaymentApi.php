@@ -33,6 +33,7 @@ class SalePaymentApi extends Bitrix24Api
         $result = $this->restClient->call('sale.payment.update', [
             'id' => $id,
             'fields' => $fields]);
+        $this->logger->info("Payment[" . $id . '] status was updated to[' . $newStatus . ']');
         return $result['result'];
     }
 
@@ -43,6 +44,7 @@ class SalePaymentApi extends Bitrix24Api
                 self::PS_ID => $this->getPaysystemId($id),
                 self::PS_INVOICE_ID => $extId
             ]]);
+        $this->logger->info("Payment[" . $id . '] extid[' . $extId . '] was saved');
         return $result['result'];
     }
 

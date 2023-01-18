@@ -4,6 +4,7 @@
 namespace esas\cmsgate\protocol\bitrix24cloud;
 
 use esas\cmsgate\protocol\Bitrix24RestClient;
+use esas\cmsgate\utils\Logger;
 
 abstract class Bitrix24Api
 {
@@ -12,13 +13,15 @@ abstract class Bitrix24Api
     /**
      * @var Bitrix24RestClient
      */
-    public $restClient = null;
+    protected $restClient = null;
+    protected $logger;
 
     /**
      * @param $client Bitrix24RestClient
      */
     public function __construct(Bitrix24RestClient $client)
     {
+        $this->logger = Logger::getLogger(get_class($this));
         $this->restClient = $client;
     }
 }

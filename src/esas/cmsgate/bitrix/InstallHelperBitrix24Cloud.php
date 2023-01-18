@@ -17,14 +17,23 @@ use esas\cmsgate\bitrix\dto\sale\PaysystemHandlerSettingsFormData;
 use esas\cmsgate\bitrix\dto\sale\PaysystemHandlerSettingsFormDataField;
 use esas\cmsgate\Registry;
 use esas\cmsgate\utils\CMSGateException;
+use esas\cmsgate\utils\Logger;
 use esas\cmsgate\view\admin\ConfigFormBitrix24Cloud;
 
 class InstallHelperBitrix24Cloud
 {
+    private $logger;
+
+    public function __construct() {
+        $this->logger = Logger::getLogger(get_class($this));
+    }
+
+
     /**
      * @throws CMSGateException
      */
     public function preinstall() {
+        $this->logger->info('Install started from domain[' . RequestParamsBitrix24Cloud::getDomain() . ']');
         $this->checkAuth();
         $this->saveAuth();
     }
@@ -34,6 +43,7 @@ class InstallHelperBitrix24Cloud
         if ($result['error'] = 0) {
             throw new CMSGateException("Auth data not correct");
         }
+        $this->logger->info("Auth is correct");
     }
 
     public function saveAuth() {
@@ -119,10 +129,9 @@ class InstallHelperBitrix24Cloud
             ->setDescription(Registry::getRegistry()->getTranslator()->getConfigFieldDefault(ConfigFields::paymentMethodDetails()))
             ->setActionFile($handlerCode)
             ->setType('ORDER')
-            ->setMain(true) // основная ПС модуля, ее ID будет храниться в OPTION_PAYSYSTEM_ID
+            ->setMain(true)
             ->setLogoPath($logoPath)
             ->setSort(100);
-
         return CmsConnectorBitrix24Cloud::fromRegistry()->getBitrix24Api(false)->salePaysystem()->restoreOrUpdateOrAdd($mainPaySystem);
     }
 }

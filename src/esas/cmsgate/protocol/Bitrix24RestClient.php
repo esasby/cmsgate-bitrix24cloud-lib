@@ -92,6 +92,8 @@ class Bitrix24RestClient
      */
     protected $memberId = null;
 
+    protected $debugMode = false;
+
     /**
      * Create a object to work with Bitrix24 REST API service
      * @param bool $isSaveRawResponse - if true raw response from bitrix24 will be available from method getRawResponse, this is debug mode
@@ -322,6 +324,13 @@ class Bitrix24RestClient
         $this->applicationCode = $code;
     }
 
+    /**
+     * @param bool $debugMode
+     */
+    public function setDebugMode($debugMode) {
+        $this->debugMode = $debugMode;
+    }
+
     public function requestAccessToken()
     {
         $applicationid = $this->getApplicationId();
@@ -419,7 +428,7 @@ class Bitrix24RestClient
         $this->requestInfo = curl_getinfo($curl);
         $curlErrorNumber = curl_errno($curl);
 
-        if (DEBUG) {
+        if ($this->debugMode) {
             $this->logger->info('REQUEST url: ' . $url . "\n\n"
                 . 'REQUEST params: ' . print_r($additionalParameters, true) . "\n\n"
                 . 'REQUEST curl raw result: ' . print_r($curlResult, true) . "\n\n"
@@ -429,7 +438,7 @@ class Bitrix24RestClient
         // handling network I/O errors
         if ($curlErrorNumber > 0) {
             $errorMsg = curl_error($curl) . PHP_EOL . 'cURL error code: ' . $curlErrorNumber . PHP_EOL;
-            if (DEBUG)
+            if ($this->debugMode)
                 $this->logger->info('REQUEST curl error: ' . '[' . $curlErrorNumber . '] ' . $errorMsg);
 
 
@@ -446,7 +455,7 @@ class Bitrix24RestClient
         $jsonErrorCode = json_last_error();
         if (!is_null($jsonResult) && (JSON_ERROR_NONE == $jsonErrorCode)) unset($curlResult);
 
-        if (DEBUG)
+        if ($this->debugMode)
             $this->logger->info('REQUEST curl decoded JSON result: ' . print_r($jsonResult, true));
 
         if (is_null($jsonResult) && (JSON_ERROR_NONE != $jsonErrorCode)) {

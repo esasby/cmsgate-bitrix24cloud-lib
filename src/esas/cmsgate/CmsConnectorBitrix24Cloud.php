@@ -55,8 +55,8 @@ class CmsConnectorBitrix24Cloud extends CmsConnectorBridge
         return new CmsConnectorDescriptor(
             "cmsgate-bitrix24cloud-lib",
             new VersionDescriptor(
-                "v1.18.2",
-                "2023-01-10"
+                "v1.18.3",
+                "2023-01-18"
             ),
             "Cmsgate Bitrix24 cloud connector",
             "https://bitbucket.esas.by/projects/CG/repos/cmsgate-bitrix24cloud-lib/browse",
@@ -107,6 +107,7 @@ class CmsConnectorBitrix24Cloud extends CmsConnectorBridge
             $client->setRefreshToken(RequestParamsBitrix24Cloud::getRefreshToken());
             $client->setApplicationId($this->config[CONFIG_APP_ID]);
             $client->setApplicationSecret($this->config[CONFIG_APP_SECRET]);
+            $client->setDebugMode($this->config[CONFIG_DEBUG_MODE]);
             return new Bitrix24CloudProtocol($client);
         }
     }
@@ -119,6 +120,7 @@ class CmsConnectorBitrix24Cloud extends CmsConnectorBridge
         $client->setRefreshToken($shopConfig->getRefreshToken());
         $client->setApplicationId($this->config[CONFIG_APP_ID]);
         $client->setApplicationSecret($this->config[CONFIG_APP_SECRET]);
+        $client->setDebugMode($this->config[CONFIG_DEBUG_MODE]);
         $this->refreshTokens($client, $shopConfig);
         return new Bitrix24CloudProtocol($client);
     }
