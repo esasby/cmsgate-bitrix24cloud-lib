@@ -30,7 +30,7 @@ class PaysystemHandlerSettingsConfigFieldConverter
      * @return mixed
      */
     public static function toArray($field) {
-        $ret['NAME'] = $field->getName();
+        $ret['NAME'] = $field->getName() . ($field->isRequired() ? '*' : '');
         if (!empty($field->getSort()))
             $ret['SORT'] = $field->getSort();
         if (!empty($field->getDescription()))

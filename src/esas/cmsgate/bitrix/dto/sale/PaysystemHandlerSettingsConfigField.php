@@ -13,6 +13,10 @@ class PaysystemHandlerSettingsConfigField
     private $typeEnumOptions;
     private $sort;
     private $group;
+    /**
+     * @var boolean
+     */
+    private $required = false;
     private $defaultProviderKey;
     private $defaultProviderValue;
 
@@ -131,6 +135,22 @@ class PaysystemHandlerSettingsConfigField
      */
     public function setGroup($group) {
         $this->group = $group;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRequired() {
+        return $this->required;
+    }
+
+    /**
+     * @param bool $required
+     * @return PaysystemHandlerSettingsConfigField
+     */
+    public function setRequired($required) {
+        $this->required = $required;
         return $this;
     }
 

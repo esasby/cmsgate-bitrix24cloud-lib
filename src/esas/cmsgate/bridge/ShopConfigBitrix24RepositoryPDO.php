@@ -6,6 +6,7 @@ namespace esas\cmsgate\bridge;
 
 use esas\cmsgate\BridgeConnector;
 use esas\cmsgate\Registry;
+use esas\cmsgate\utils\CMSGateException;
 use esas\cmsgate\utils\Logger;
 use esas\cmsgate\utils\StringUtils;
 use PDO;
@@ -112,5 +113,9 @@ class ShopConfigBitrix24RepositoryPDO extends ShopConfigBitrix24Repository
             $configCache =  $this->createShopConfigObject($row);
         }
         return $configCache;
+    }
+
+    public function saveConfigData($configCacheUUID, $configData) {
+        throw new CMSGateException('Not implemented');
     }
 }

@@ -85,7 +85,8 @@ class ConfigFormBitrix24Cloud extends ConfigFormArray
             ->setKey($configField->getKey())
             ->setDescription($configField->getDescription())
             ->setSort($configField->getSortOrder())
-            ->setGroup($this->getFormKey());
+            ->setGroup($this->getFormKey())
+            ->setRequired($configField->isRequired());
 
         if ($addDefault && $configField->hasDefault()) {
             $bitrixConfigField->setDefaultProviderKey('VALUE');
