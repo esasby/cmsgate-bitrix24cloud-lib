@@ -611,7 +611,7 @@ class Bitrix24RestClient
         } elseif (is_null($refreshToken)) {
             throw new CmsgateException('application id not found, you must call setRefreshToken method before');
         }
-        $url = 'https://' . $domain . "/oauth/token/" .
+        $url = "https://oauth.bitrix.info/oauth/token/" .
             "?client_id=" . urlencode($applicationId) .
             "&grant_type=refresh_token" .
             "&client_secret=" . $applicationSecret .
